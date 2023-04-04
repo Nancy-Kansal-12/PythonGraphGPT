@@ -251,9 +251,7 @@ class App :
     def createGraph(self) :
         
         soup = BeautifulSoup(self.content(), 'html.parser')
-        data = soup.find('button', class_="generateButton")
-        print(data)
-        # soup.find_all('button', {'class': 'inputContainer'})[0].disabled = True
+        soup.find('button', class_="generateButton").disabled = True
         
         self.changeCursor("wait")
 
