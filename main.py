@@ -265,18 +265,20 @@ class App :
     
     def createGraph(self) :
         
-        soup = BeautifulSoup(self.content(), 'html.parser')
-        soup.find('button', class_="generateButton").disabled = True
-        
-        self.changeCursor("wait")
+        with open('templates/index.html', 'r') as file_obj:
 
-        prompt = soup.find('input', {"class" : "searchBar"}).value
-        apiKey = soup.find('input', class_="apiKeyTextField").value
-        print("HI")
-        print(prompt)
-        print(apiKey)
+            soup = BeautifulSoup(file_obj,"html.parser")
+            soup.find('button', class_="generateButton").disabled = True
+            
+            self.changeCursor("wait")
 
-        self.queryPrompt(prompt, apiKey)
+            prompt = soup.find('input', {"class" : "searchBar"}).get('value')
+            apiKey = soup.find('input', class_="apiKeyTextField").get('value')
+            print("HI")
+            print(prompt)
+            print(apiKey)
+
+            self.queryPrompt(prompt, apiKey)
         return
     
     def content(self) :
