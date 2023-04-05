@@ -59,6 +59,10 @@ class App :
         root.update()
         time.sleep(5)
         root.config(cursor="")
+        
+    def alert(self, message) :
+        win32api.MessageBox(0, message, 'Alert', 0x00001000)
+        return       
 
     
     def updateGraph(self,updates) :
@@ -163,7 +167,7 @@ class App :
             # print(apiKey)
             response = requests.post("https://api.openai.com/v1/completions", headers, json=params)
         except requests.exceptions.RequestException as e: 
-            win32api.MessageBox("Error")
+            self.alert("Error")
             raise SystemExit(e)
         
         
@@ -171,6 +175,7 @@ class App :
             status = response.status_code
             if (status == 401) :
                 # win32api.MessageBox(0 , "Please double-check your API key.", "Alert Box", win32con.MB_OK | win32con.MB_ICONWARNING)
+                self.alert("Please double-check your API key.")
                 raise Exception("Please double-check your API key.")
             elif (status == 429) :
                 raise Exception("You exceeded your current quota, please check your plan and billing details.")
@@ -220,7 +225,7 @@ class App :
         try:
             response = requests.post("https://api.openai.com/v1/completions", headers, json=params)
         except requests.exceptions.RequestException as e: 
-            win32api.MessageBox("Error")
+            self.alert("Error")
             raise SystemExit(e)
         
         if (not(response.ok)) :
@@ -258,7 +263,7 @@ class App :
         elif (SELECTED_PROMPT == "STATEFUL") :
             self.queryStatefulPrompt(prompt, apiKey)
         else :
-            win32api.MessageBox("Please select a prompt")
+            self.alert("Please select a prompt")
             self.changeCursor("default")
             soup.find('input', class_="generateButton").disabled = False
         return
@@ -272,8 +277,8 @@ class App :
             
             self.changeCursor("wait")
 
-            prompt = soup.find('input', {"class" : "searchBar"}).get('value')
-            apiKey = soup.find('input', class_="apiKeyTextField").get('value')
+            prompt = soup.find('input', {"class" : "searchBar"}).get_text()
+            apiKey = soup.find('input', class_="apiKeyTextField").get_text()
             print("HI")
             print(prompt)
             print(apiKey)
