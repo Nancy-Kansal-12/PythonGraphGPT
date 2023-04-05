@@ -5,6 +5,8 @@ import json
 from tkinter import *
 import time
 from flask import Flask, render_template
+from requests.auth import HTTPBasicAuth
+import win32con
 
 
 
@@ -137,29 +139,38 @@ class App :
     def queryStatelessPrompt(self, prompt, apiKey) :
         
         # fetch
-        fp = open(r'prompts/stateless.prompt', 'r')
-        fp.replace("$prompt", prompt)
+        fp = open(r'prompts/stateless.prompt', 'r+')
+        fp_data = fp.read()
+        if prompt==None :
+            prompt = ""
+        fp_data = fp_data.replace("$prompt", prompt)
+        # fp.write(fp_data)
         # read file
-        print(fp.read())
+        print(fp_data)
 
         
-        params = {"prompt": fp , "stop": "\n"}
+        params = DEFAULT_PARAMS
         
-        params.update(DEFAULT_PARAMS)
+        params.update({"prompt": fp_data , "stop": "\n"})
         
         fp.close()
         
         headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + str(apiKey)}
         
         try:
+            # response = requests.post("https://api.openai.com/v1/completions", headers, json=params)
+            # auth = HTTPBasicAuth(apiKey, '1234abcd')
+            # print(apiKey)
             response = requests.post("https://api.openai.com/v1/completions", headers, json=params)
         except requests.exceptions.RequestException as e: 
             win32api.MessageBox("Error")
             raise SystemExit(e)
         
+        
         if (not(response.ok)) :
             status = response.status_code
             if (status == 401) :
+                # win32api.MessageBox(0 , "Please double-check your API key.", "Alert Box", win32con.MB_OK | win32con.MB_ICONWARNING)
                 raise Exception("Please double-check your API key.")
             elif (status == 429) :
                 raise Exception("You exceeded your current quota, please check your plan and billing details.")
@@ -188,13 +199,17 @@ class App :
     def queryStatefulPrompt(self, prompt, apiKey) :
         
         # fetch
-        fp = open(r'prompts/statelful.prompt', 'r')
-        fp.replace("$prompt", prompt)
-        fp.replace("$state", str(self.graphState))
+        fp = open(r'prompts/statelful.prompt', 'r+')
+        fp_data = fp.read()
+        if prompt==None :
+            prompt = ""
+        fp_data = fp_data.replace("$prompt", prompt)
+        fp_data = fp_data.replace("$state", str(self.graphState))
+        # fp.write(fp_data)
         # read file
-        print(fp.read())
+        print(fp_data)
         
-        params = {"prompt": fp , "stop": "\n"}
+        params = {"prompt": fp_data , "stop": "\n"}
         
         params.update(DEFAULT_PARAMS)
         
@@ -255,8 +270,11 @@ class App :
         
         self.changeCursor("wait")
 
-        prompt = soup.find('input', class_="searchBar").value
+        prompt = soup.find('input', {"class" : "searchBar"}).value
         apiKey = soup.find('input', class_="apiKeyTextField").value
+        print("HI")
+        print(prompt)
+        print(apiKey)
 
         self.queryPrompt(prompt, apiKey)
         return
@@ -298,9 +316,10 @@ app = Flask(__name__)
 
 appGraphGPT = App()
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def indexpage():
-    return appGraphGPT.content()
+    # return appGraphGPT.content()
+    return render_template('index.html')
 
 @app.route('/createGraph')
 def createGraph() :
@@ -311,6 +330,6 @@ def clearState() :
     appGraphGPT.clearState()
 
 if __name__ == '__main__':
-    port = 8000 #the custom port you want
+    port = 8000 
     app.run(host='0.0.0.0', port=port)
         
