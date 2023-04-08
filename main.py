@@ -310,6 +310,9 @@ class App :
     </div>""")
         
 app = Flask(__name__)
+searchBar = ""
+apiKeyTextField = ""
+
 
 @app.route('/', methods=['GET'])
 def indexpage():
@@ -320,10 +323,16 @@ def indexpage():
 @app.route('/createGraph', methods=['POST'])
 def createGraph() :
     # return Response(appGraphGPT.createGraph(), status=200)
+    return
+    # return render_template('index.html', graphState = appGraphGPT.graphState, options = options)
+
+@app.route('/', methods=['POST'])
+def callCreateGraph():
+    # return appGraphGPT.content()
+    # return render_template('index.html', graphState = appGraphGPT.graphState, options = options)
     searchBar = request.form.get('searchBar')
     apiKeyTextField = request.form.get("apiKeyTextField")
-    appGraphGPT.createGraph(searchBar, apiKeyTextField)
-    # return render_template('index.html', graphState = appGraphGPT.graphState, options = options)
+    App.createGraph(appGraphGPT, searchBar, apiKeyTextField)
     
 @app.route('/clearState')
 def clearState() :
