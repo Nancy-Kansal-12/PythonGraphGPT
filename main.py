@@ -332,7 +332,7 @@ def callCreateGraph():
     # return render_template('index.html', graphState = appGraphGPT.graphState, options = options)
     searchBar = request.form.get('searchBar')
     apiKeyTextField = request.form.get("apiKeyTextField")
-    App.createGraph(appGraphGPT, searchBar, apiKeyTextField)
+    appGraphGPT.createGraph(searchBar, apiKeyTextField)
     
 @app.route('/clearState')
 def clearState() :
