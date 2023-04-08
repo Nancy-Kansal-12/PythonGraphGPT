@@ -5,7 +5,7 @@
         <script>
             function createGraph(){
                 var request = new XMLHttpRequest()
-                request.open("GET", "/createGraph" , true)
+                request.open("POST", "/createGraph" , true)
                 request.send()
             }
             function clearState(){
@@ -22,10 +22,12 @@
           <p class='opensourceText'><a href="https://github.com/varunshenoy/graphgpt">GraphGPT is open-source</a>&nbsp;🎉</p>
           <center>
             <div class='inputContainer'>
-              <input class="searchBar" placeholder="Describe your graph..."></input>
-              <input class="apiKeyTextField" type="password" placeholder="Enter your OpenAI API key..."></input>
-              <button class="generateButton" onClick="createGraph()">Generate</button>
-              <button class="clearButton" onClick="clearState()">Clear</button>
+              <form method="POST" action="/" class="graph-form">
+                <input class="searchBar" name="searchBar" value="" placeholder="Describe your graph..."></input>
+                <input class="apiKeyTextField" name="apiKeyTextField" value="" type="password" placeholder="Enter your OpenAI API key..."></input>
+                <button class="generateButton" name="generateButton" onClick="createGraph()">Generate</button>
+                <button class="clearButton" onClick="clearState()">Clear</button>
+              </form>
             </div>
           </center>
           <div class='graphContainer'>

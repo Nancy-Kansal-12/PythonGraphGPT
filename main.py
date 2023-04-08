@@ -4,7 +4,7 @@ import win32api
 import json
 from tkinter import *
 import time
-from flask import Flask, render_template
+from flask import Flask, render_template, Response, request
 from requests.auth import HTTPBasicAuth
 import win32con
 
@@ -55,7 +55,7 @@ class App :
     
     def changeCursor(self, value) :
         root = Tk()
-        root.config(cursor=value)
+        root.config(cursor='wait')
         root.update()
         time.sleep(5)
         root.config(cursor="")
@@ -69,14 +69,14 @@ class App :
         
         current_graph = self.graphState
         
-        if (updates.len() == 0) :
+        if (len(updates) == 0) :
             return  
         
         if (type(updates[0]) == str) :
             updates = [updates] 
             
         for update in updates :
-            if (update.length == 3) :
+            if (len(update) == 3) :
                 [entity1, relation, entity2] = update
                 
                 node1 = self.findNode(current_graph["nodes"], entity1)
@@ -96,7 +96,7 @@ class App :
                 
                 current_graph["edges"].append({"from": entity1, "to": entity2, "label": relation })
                 
-            elif (update.length == 2 and update[1].startswith("#")) :
+            elif (len(update) == 2 and update[1].startswith("#")) :
                 [entity, color] = update
                 
                 node = self.findNode(current_graph["nodes"], entity)
@@ -108,7 +108,7 @@ class App :
                 #  update the color of the node
                 node[color] = color
                 
-            elif (update.length == 2 and update[0] == "DELETE") :
+            elif (len(update) == 2 and update[0] == "DELETE") :
                 #  delete the node at the given index
                 [_, index] = update
 
@@ -148,24 +148,22 @@ class App :
         if prompt==None :
             prompt = ""
         fp_data = fp_data.replace("$prompt", prompt)
-        # fp.write(fp_data)
-        # read file
         print(fp_data)
 
         
         params = DEFAULT_PARAMS
         
-        params.update({"prompt": fp_data , "stop": "\n"})
+        params.update({"prompt": prompt , "stop": "\n"})
         
         fp.close()
         
-        headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + str(apiKey)}
+        headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey}
         
         try:
             # response = requests.post("https://api.openai.com/v1/completions", headers, json=params)
             # auth = HTTPBasicAuth(apiKey, '1234abcd')
             # print(apiKey)
-            response = requests.post("https://api.openai.com/v1/completions", headers, json=params)
+            response = requests.post("https://api.openai.com/v1/completions", headers= headers, json=params)
         except requests.exceptions.RequestException as e: 
             self.alert("Error")
             raise SystemExit(e)
@@ -183,21 +181,25 @@ class App :
                 raise Exception("Something went wrong with the request, please check the Network log")
             
         else :
-            
-            choices = response["choices"]
+            print("Hlo")
+            print(response.json())
+            choices = dict(response.json())["choices"]
+            print(choices)
             text = choices[0]["text"]
+            print("hlo1")
             print(text)
             
-            updates = json.load(text)
+            updates = text
             print(updates)
             
             self.updateGraph(updates)
             
-            soup = BeautifulSoup(self.content(), 'html.parser')
-            
-            soup.find('input', class_="searchBar").value = ""
-            self.changeCursor("default")
-            soup.find('input', class_="generateButton").disabled = False
+            with open('templates/index.html', 'r') as file_obj:
+
+                soup = BeautifulSoup(file_obj,"html.parser")
+                soup.find('input', class_="searchBar").value = ""
+                self.changeCursor("default")
+                soup.find('button', {"class":"generateButton"}).disabled = False
             
         return
     
@@ -268,22 +270,10 @@ class App :
             soup.find('input', class_="generateButton").disabled = False
         return
     
-    def createGraph(self) :
+    def createGraph(self, searchBar, apiKey) :
         
         with open('templates/index.html', 'r') as file_obj:
-
-            soup = BeautifulSoup(file_obj,"html.parser")
-            soup.find('button', class_="generateButton").disabled = True
-            
-            self.changeCursor("wait")
-
-            prompt = soup.find('input', {"class" : "searchBar"}).get_text()
-            apiKey = soup.find('input', class_="apiKeyTextField").get_text()
-            print("HI")
-            print(prompt)
-            print(apiKey)
-
-            self.queryPrompt(prompt, apiKey)
+            self.queryPrompt(searchBar, apiKey)
         return
     
     def content(self) :
@@ -321,22 +311,26 @@ class App :
         
 app = Flask(__name__)
 
-appGraphGPT = App()
-
 @app.route('/', methods=['GET'])
 def indexpage():
     # return appGraphGPT.content()
+    # return render_template('index.html', graphState = appGraphGPT.graphState, options = options)
     return render_template('index.html')
 
-@app.route('/createGraph')
+@app.route('/createGraph', methods=['POST'])
 def createGraph() :
-    appGraphGPT.createGraph()
+    # return Response(appGraphGPT.createGraph(), status=200)
+    searchBar = request.form.get('searchBar')
+    apiKeyTextField = request.form.get("apiKeyTextField")
+    App.createGraph(appGraphGPT, searchBar, apiKeyTextField)
+    # return render_template('index.html', graphState = appGraphGPT.graphState, options = options)
     
 @app.route('/clearState')
 def clearState() :
+    # return Response(appGraphGPT.clearState(), status=200)
     appGraphGPT.clearState()
 
 if __name__ == '__main__':
+    appGraphGPT = App()
     port = 8000 
-    app.run(host='0.0.0.0', port=port)
-        
+    app.run(host='0.0.0.0', port=port)        
